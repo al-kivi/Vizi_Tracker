@@ -4,11 +4,11 @@ require 'rake/rdoctask'
 require 'rake/testtask'
 
 spec = Gem::Specification.new do |s|
-    s.name      =   "vizi-tracker"
+    s.name      =   "vizi_tracker"
     s.version   =   "0.1.0"
     s.author    =   "Al Kivi"
     s.email     =   "al.kivi at vizitrax.com"
-    s.homepage  =   "http://github.com/al-kivi/http-log-parser"
+    s.homepage  =   "http://github.com/al-kivi/vizi_tracker"
     s.description = "Univeral web log file parser and visit analyzer"
     s.summary   =   "A package for parsing web server logs and creating visit records"
 
