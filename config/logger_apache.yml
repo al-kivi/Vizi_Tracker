@@ -1,0 +1,65 @@
+# Configuration data for logger
+#max_rec_count: 100
+visit_timeout: 1200
+summary_flag: true
+convert_to_lower_case: true
+#homepage: /home.aspx
+homepage: /
+accept_only_homepage: true
+page_urls:
+- aspx
+- asp
+hide_urls:
+- css
+- js
+- gif
+- swf
+- ico
+- chart
+- robots
+hostname: www.sigma-systems.com
+drop_refers_by_hostname: true 
+getlocal_time: true
+drop_ips:
+- 76.12.185.100
+spider_ips:
+- 66.98.254.55
+- 64.208.168.252
+- 64.235.108.183
+- 76.2.144.115
+- 66.98.254.236
+- 202.108.22.132
+- 89.122.29.77
+- 95.174.93.222
+- 66.55.37.179
+- 198.45.18.20
+- 38.104.227.3
+spider_names:
+- bot
+- spider
+- slurp
+- root.exe
+- .dll
+- slurp
+- looksmart
+- nutchsvc
+- iconsurf
+- objectsearch
+- openfind
+- iltovatore
+- mozdex
+- netresearch
+- konsqueror
+- crawler	
+- searchme
+- java/1.6.0_04
+- scoutjet
+- yeti
+- yandex
+page_numbers:
+- /visit/index,1
+- /visit/show/,2
+- /visit/vcardedit/,3
+- /visit/showmap_na,4
+- /visit/showmap_row,5
+match_page_numbers: true

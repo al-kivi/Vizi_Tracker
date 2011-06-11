@@ -1,0 +1,6 @@
+.bundle
+log/
+data/
+*.log
+config/database.yml
+doc/
