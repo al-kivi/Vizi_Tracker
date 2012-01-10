@@ -7,9 +7,9 @@
 # Author::    Al Kivi <al.kivi@vizitrax.com>
 
 # Use either the library version of the code
-require './lib/vizi_tracker'
+## require './lib/vizi_tracker'
 # Or replace the above line to reference the gem version, if installed
-# require 'vizi_tracker'
+require 'vizi_tracker'
 
 require 'yaml'
 require 'logger'
