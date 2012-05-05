@@ -1,49 +1,39 @@
-# Configuration data for logger
-#max_rec_count: 100
+# basic configuration data  ...................................
+max_rec_count: 99999
+sub_directory: data/
 visit_timeout: 1200
-summary_flag: true
-convert_to_lower_case: true
-log_level: warn 
 #log_level options are debug, info, warn, error, fatal
-homepage: /home.aspx
-#homepage: /
-accept_only_homepage: true
-page_urls:
-- aspx
-- asp
-hide_urls:
-- css
-- js
-- gif
-- swf
-- ico
-- chart
-- robots
+log_level: info
+log_record_counts: true
+convert_to_lower_case: true
+url_stem: /
+accept_only_url_stem: false
+include_urls:
+- .htm
+- .pdf
+- home.aspx
+exclude_urls:
+- .html
+# sitemap_match: true
 hostname: www.sigma-systems.com
-drop_refers_by_hostname: true 
+drop_refers_by_hostname: false 
+# output_where_rank_over: 2
 use_local_time: true
-download_page_number: 45
 drop_ips:
+- 10.131.0.4
+- 76.12.171.4
 - 76.12.185.100
 spider_ips:
 - 66.98.254.55
-- 64.208.168.252
-- 64.235.108.183
-- 76.2.144.115
-- 66.98.254.236
-- 202.108.22.132
-- 89.122.29.77
-- 95.174.93.222
-- 66.55.37.179
-- 198.45.18.20
-- 38.104.227.3
+# post processing instructions ..............................
+output_where_rank_over: 2
+sitemap_match: true
+# spider and user agents ....................................
 spider_names:
 - bot
 - spider
 - slurp
 - root.exe
-- .dll
-- slurp
 - looksmart
 - nutchsvc
 - iconsurf
@@ -55,15 +45,63 @@ spider_names:
 - konsqueror
 - crawler	
 - searchme
-- java/1.6.0_04
+- findlinks
 - scoutjet
 - yeti
 - yandex
-# convert urls to assigned numbers where numbers cannot be parsed from url
-assigned_numbers:
-- /visit/index,1
-- /visit/show/,2
-- /visit/vcardedit/,3
-- /visit/showmap_na,4
-- /visit/showmap_row,5
-match_page_numbers: false
+- fetch
+- nutch
+- sleuth
+- globalspec
+- openurl
+- python
+- acoon
+- itim
+- metauri
+- extractor
+- exractor
+- pagegetter
+- linkdex
+- website
+- xfruits
+- binlar
+- abacus
+- anemone
+- ichiro
+- scraping
+- xpymep
+- swish
+- sitemaps
+- yahoocachesystem
+- sexy
+- .dll
+- java/1
+usual_agents:
+- mozilla
+- opera
+- chrome
+- lynx
+- nokia
+- blackberry
+- sharp
+- docomo
+- curl
+- facebook
+- microsoft
+- securepoint
+- wordpress
+# advanced: db lookups and csv ..................................
+whois_lookup: true
+use_db_lookup: true
+use_db_visits: true
+# create_csv_file: false
+# advanced: email notification ..................................
+admin_email: ...
+user_email: ..
+email_server: ...
+send_logmsg_admin: ...
+# advanced: google docs connection ..............................
+use_gdocs: ...
+gdocs_user: ...
+gdocs_password: ...
+gdocs_key: ...

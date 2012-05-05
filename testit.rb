@@ -6,9 +6,8 @@
 #
 # Author::    Al Kivi <al.kivi@vizitrax.com>
 
-# Use either the library version of the code
-## require './lib/vizi_tracker'
-# Or replace the above line to reference the gem version, if installed
+require 'rubygems'   # needed for ruby 1.8.7
+# require '...\vizi_tracker\lib\vizi\vizi_tracker'
 require 'vizi_tracker'
 
 require 'yaml'
@@ -21,10 +20,10 @@ config = YAML.load_file("config/logger.yml")
 
 # Initialize the log parser
 parser = Vizi::LogParser.new(config["drop_ips"], config["spider_ips"], 
-  config["spider_names"], config["page_urls"], config["hide_urls"], 
-  config["homepage"], config["accept_only_homepage"],config["hostname"], 
-  config["drop_refers_by_hostname"], config["use_local_time"],
-  config["assigned_numbers"], config["match_page_numbers"])
+	config["spider_names"], config["include_urls"], config["exclude_urls"], 
+	config["url_stem"], config["accept_only_url_stem"],config["hostname"], 
+	config["drop_refers_by_hostname"], config["usual_agents"], 
+	config["use_local_time"])  
  
 syslog = Logger.new('./log/system.log',shift_age = 'weekly')
 case config["log_level"]
@@ -57,6 +56,7 @@ File.open('./data/exlog.log', 'r') do |file|
   logformat = nil
   # Begin to parse each record
   while(line = file.gets)
+#  p line
     parsed_data = parser.parse_line(line, logformat)
     logformat = parsed_data[:p_logformat]
     rec_count = rec_count + 1 
@@ -65,30 +65,29 @@ File.open('./data/exlog.log', 'r') do |file|
     page_count = page_count + 1 if parsed_data[:p_pageflag]
     @visit=vlist.find_by_ip(parsed_data[:ip])
 	if @visit.nil?
-	  vlist.append(Vizi::Visit.new(parsed_data[:ip],parsed_data[:datetime],parsed_data[:csuristem],parsed_data[:csuriquery], parsed_data[:timetaken],
-	    parsed_data[:p_visitortype],parsed_data[:p_pageflag],parsed_data[:p_searchphrase],parsed_data[:p_pageid]))    
+		vlist.append(Vizi::Visit.new(parsed_data[:ip],parsed_data[:datetime],parsed_data[:csuristem],parsed_data[:csuriquery], parsed_data[:timetaken],
+			parsed_data[:p_visitortype],parsed_data[:p_pageflag],parsed_data[:p_returnhit],parsed_data[:p_pdfstem],config["visit_timeout"]))
       @visit=vlist.find_by_ip(parsed_data[:ip])     
 	  visit_count = visit_count + 1 
 	else
-	  @visit.update(parsed_data[:datetime],parsed_data[:csuriquery],parsed_data[:timetaken],
-	    parsed_data[:p_visitortype],parsed_data[:p_pageflag],parsed_data[:p_searchphrase], parsed_data[:p_pageid])
+	  @visit.update(parsed_data[:datetime],parsed_data[:p_visitortype],parsed_data[:p_pageflag],parsed_data[:p_returnhit],parsed_data[:p_pdfstem])
     end
     @visits = vlist.find_expired(@visit.start_dt)
     if @visits 
       @visits.sendoutput
       vlist.delete(@visits) 
-      human_count = human_count + 1 if @visits.visitortype == "H" 
-      drop_count = drop_count + 1 if @visits.visitortype == "D"
-      spider_count = spider_count + 1 if @visits.visitortype == "S"                   
+      human_count = human_count + 1 if @visits.vtype == "H" 
+      drop_count = drop_count + 1 if @visits.vtype == "D"
+      spider_count = spider_count + 1 if @visits.vtype == "S"                   
     end
     break if rec_count == max_rec_count
   end
   @visits = vlist.find_all
   @visits.each {|v|
     v.sendoutput
-    human_count = human_count + 1 if v.visitortype == "H"
-    drop_count = drop_count + 1 if v.visitortype == "D"
-    spider_count = spider_count + 1 if v.visitortype == "S"      
+    human_count = human_count + 1 if v.vtype == "H"
+    drop_count = drop_count + 1 if v.vtype == "D"
+    spider_count = spider_count + 1 if v.vtype == "S"      
   }  
   if config["summary_flag"]
     syslog.info "Record count is "+rec_count.to_s

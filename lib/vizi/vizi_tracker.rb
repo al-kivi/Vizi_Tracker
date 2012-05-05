@@ -18,30 +18,30 @@ module Vizi
         # format string char => [:symbol to use, /regex to use when matching against log/]
         'h' => [:ip, /\d+\.\d+\.\d+\.\d+/], 	# apache and IIS: called c-ip in IIS
         'p' => [:sip, /\d+\.\d+\.\d+\.\d+/],	# IIS:
-        'g' => [:auth, /\S*/],					# apache:
-        'u' => [:username, /\S*/],				# apache and IIS: called cs-username in IIS
-        't' => [:dtstring, /\[.*?\]/],			# apache: one field with date and time
+        'g' => [:auth, /\S*/],								# apache:
+        'u' => [:username, /\S*/],						# apache and IIS: called cs-username in IIS
+        't' => [:dtstring, /\[.*?\]/],				# apache: one field with date and time
         'd' => [:datestring, /\d+\-\d+\-\d+/],	# IIS:
         'e' => [:timestring, /\d+\:\d+\:\d+/],	# IIS:       
-        'r' => [:request, /.*?/],				# apache: includes both csmethod and csuristem
-        'm' => [:csmethod, /\w*?/],				# IIS:
-        'w' => [:csuristem, /\S*/],				# IIS:             
-        's' => [:status, /\d+/],				# apache and IIS: is called sc_status in IIS
-        'b' => [:bytecount, /-|\d+/],			# apache and IIS: is called cs_bytes in IIS
-        'v' => [:domain, /.*?/],				# apache and IIS: is c-computername in IIS
-        'i' => [:header_lines, /.*?/],			# apache: transforms to useragent or referer or cookies
-        'a' => [:useragent, /\S*/],				# IIS: 
-        'j' => [:referer, /\S*/],				# IIS: 
-        'k' => [:cscookie, /\d+/],				# IIS:                    
-        'q' => [:csuriquery, /.*/],				# IIS:
-        'y' => [:csbytes, /d+/],				# IIS:
-        'o' => [:sport, /\d+/],					# IIS:
-        'x' => [:scsubstatus, /\d+/],			# IIS:
-        'z' => [:cshost, /\d+/],				# IIS:       
-        'l' => [:win32status, /\d+/],			# IIS: 
-        'n' => [:timetaken, /\d+/],				# IIS:
-        'c' => [:comment, /^#/],				# IIS: comment line identifier      
-        'f' => [:fields, /^#Fields:/]			# IIS: field line identifier 
+        'r' => [:request, /.*?/],							# apache: includes both csmethod and csuristem
+        'm' => [:csmethod, /\w*?/],						# IIS:
+        'w' => [:csuristem, /\S*/],						# IIS:             
+        's' => [:status, /\d+/],							# apache and IIS: is called sc_status in IIS
+        'b' => [:bytecount, /-|\d+/],					# apache and IIS: is called cs_bytes in IIS
+        'v' => [:domain, /.*?/],							# apache and IIS: is c-computername in IIS
+        'i' => [:header_lines, /.*?/],				# apache: transforms to useragent or referer or cookies
+        'a' => [:useragent, /\S*/],						# IIS: 
+        'j' => [:referer, /\S*/],							# IIS: 
+        'k' => [:cscookie, /\d+/],						# IIS:                    
+        'q' => [:csuriquery, /.*/],						# IIS:
+        'y' => [:csbytes, /d+/],							# IIS:
+        'o' => [:sport, /\d+/],								# IIS:
+        'x' => [:scsubstatus, /\d+/],					# IIS:
+        'z' => [:cshost, /\d+/],							# IIS:       
+        'l' => [:win32status, /\d+/],					# IIS: 
+        'n' => [:timetaken, /\d+/],						# IIS:
+        'c' => [:comment, /^#/],							# IIS: comment line identifier      
+        'f' => [:fields, /^#Fields:/]					# IIS: field line identifier 
     }
 
 # This method initializes the LogFormat object with fieldnames and log formats
@@ -106,7 +106,7 @@ module Vizi
         'cs-uri-query' => 'q',
         'cs(Referer)' => 'j', 		# internal shortened to referer
         'cs(User-Agent)' => 'a', 	# internal shortened to useragent
-        'cs(Cookie)' => 'k', 		# internal shortened to cscookie        
+        'cs(Cookie)' => 'k', 			# internal shortened to cscookie        
         's-port' => 'o',
         'cs-host' => 'z',       
         'sc-substatus' => 'x',
@@ -120,20 +120,19 @@ module Vizi
     #@@log = ActiveRecord::Base.logger
 
 # This method initialises LogParser object and loads the configurable logger control items
-    def initialize(drop_ips, spider_ips, spider_names, page_urls, hide_urls, homepage, accept_only_homepage, 
-        hostname, drop_refers_by_hostname, use_local_time, assigned_numbers, match_page_numbers)
+    def initialize(drop_ips, spider_ips, spider_names, include_urls, exclude_urls, url_stem, accept_only_url_stem, 
+        hostname, drop_refers_by_hostname, usualagents, use_local_time)
       @drops = drop_ips
       @sips = spider_ips
       @snames = spider_names
-      @page_urls = page_urls
-      @hide_urls = hide_urls
-      @homepage = homepage
-      @accept_only_homepage = accept_only_homepage
+      @include_urls = include_urls
+      @exclude_urls = exclude_urls
+      @url_stem = url_stem
+      @accept_only_url_stem = accept_only_url_stem
       @hostname = hostname
       @drop_refers_by_hostname = drop_refers_by_hostname
+      @usualagents = usualagents
       @use_local_time = use_local_time
-      @assigned_numbers = assigned_numbers
-      @match_page_numbers = match_page_numbers
       @log_format = []
       initialize_known_formats
       @parselog = Logger.new('./log/parse.log', shift_age = 'weekly')
@@ -174,7 +173,7 @@ module Vizi
       hit = nil
       i = 0
       while i < fldarray.length
-        hit = field.index(fldarray[i])
+				hit = field.index(fldarray[i])
         break if hit
         i = i + 1
       end
@@ -199,6 +198,9 @@ module Vizi
 
 # apache files ... regex the file to determine logformat name
 # IIS files ... parse the fields string to determine the file contents
+# :p_linetype   ... line is a (C)ontrol line, (F)ield line or a good (V)isitor line
+# :p_pageflag   ... (Y)es is a valid page or (N)ot
+# :p_vistortype ... (H)uman, (S)pider, (D)ropped or (-) Not relevant
     def parse_line(line, logformat)
       if logformat != nil
         log_format = logformat # get log_format string
@@ -219,7 +221,7 @@ module Vizi
       parsed_data[:p_logformat] = logformat
       parsed_data[:p_visitortype] = "H" # set default visitor type (H)uman
       parsed_data[:p_linetype] = "V" # linetype is (V)isitors
-      parsed_data[:p_linetype] = "C" if parsed_data[:ip].nil? # reset if a comment line
+      parsed_data[:p_linetype] = "C" if parsed_data[:ip].nil? # reset if a comment line     
       if @format_name.to_s == "w3c_f" # IIS file name ... generic
         @format = build_format(line) # parse fields to get log_format
         temp_format = Vizi::LogFormat.new(:temp, @format) # create temp format
@@ -252,28 +254,39 @@ module Vizi
 
         if parsed_data[:request]
 #          splitrequest = parsed_data[:request].gsub("/", " ").split
-		  splitrequest = parsed_data[:request].split(' ')
+					splitrequest = parsed_data[:request].split(' ')
           parsed_data[:csuristem] = splitrequest[1]
         end
 
-#     Now classify visitortype based on logger yml rules ...
-
-        parsed_data[:p_pageflag] = false
-        if @accept_only_homepage
-        #p @homepage
-        #p parsed_data[:csuristem]
-          parsed_data[:p_pageflag] = true if parsed_data[:csuristem].downcase.index(@homepage) == 0
+#     Now determine visitortype based on logger yml rules ...
+        parsed_data[:p_pageflag] = "N"	        
+				if @accept_only_url_stem  # indicates that url_stem must always appear at start of csuristem			
+          parsed_data[:p_pageflag] = "Y" if parsed_data[:csuristem].downcase.index(@url_stem) == 0
         else
-          parsed_data[:p_pageflag] = true if match_partial(parsed_data[:csuristem], @page_urls)
-        end
-        parsed_data[:p_pageflag] = false if @hide_urls and match_partial(parsed_data[:csuristem], @hide_urls)
-
+					if parsed_data[:csuristem].downcase == @url_stem
+						parsed_data[:p_pageflag] = "Y" 
+					else
+						if @include_urls
+							parsed_data[:p_pageflag] = "Y" if match_partial(parsed_data[:csuristem].downcase, @include_urls)
+						end
+						if @exclude_urls
+							parsed_data[:p_pageflag] = "N" if match_partial(parsed_data[:csuristem].downcase, @exclude_urls)
+						end
+					end
+				end
+				
+				parsed_data[:p_visitortype] = "D" if parsed_data[:status] == "404"			
         parsed_data[:p_visitortype] = "D" if @drops and @drops.index(parsed_data[:ip])
-        parsed_data[:p_visitortype] = "S" if @sips and@sips.index(parsed_data[:ip])
-
-        if parsed_data[:useragent] and @snames and match_partial(parsed_data[:useragent], @snames)
+        parsed_data[:p_visitortype] = "S" if @sips and @sips.index(parsed_data[:ip])
+        if parsed_data[:useragent] and @snames and match_partial(parsed_data[:useragent].downcase, @snames)
           parsed_data[:p_visitortype] = "S"
         end
+        parsed_data[:p_visitortype] = "S" if parsed_data[:useragent] == "-"      
+        parsed_data[:p_usualagent] = "Y" 
+        parsed_data[:p_usualagent] = "N" if parsed_data[:p_visitortype] != "S" and not match_partial(parsed_data[:useragent].downcase, @usualagents)
+        
+				parsed_data[:p_returnhit] = "N"
+				parsed_data[:p_returnhit] = "Y" if parsed_data[:status] == "304"
 
         if parsed_data[:referer]
           y = (/(search\?\S*?[pq])=(\S*?)(&)/).match(parsed_data[:referer])
@@ -283,11 +296,8 @@ module Vizi
           end
         end
         
-        if @match_page_numbers and parsed_data[:p_pageflag]
-          parsed_data[:p_pageid] = find_assigned_number(parsed_data[:csuristem], @assigned_numbers)
-#          p ">>" + parsed_data[:p_pageid].to_s if parsed_data[:p_pageid]
-        end
-        
+				parsed_data[:p_pdfstem] = nil
+				parsed_data[:p_pdfstem] = parsed_data[:csuristem].downcase if parsed_data[:csuristem].downcase.index("/pdfs/") == 0
       end
       parsed_data
     end
@@ -297,80 +307,203 @@ module Vizi
 # Visits are determined on the basis of the IP Address hits during a timed interval
 #
   class Visit  
-    attr_accessor :ip, :start_dt, :end_dt, :expire_dt, :duration, :hits, :pages, :robots, :visitortype, :searchphrase
+    attr_accessor :ip, :start_dt, :end_dt, :expire_dt, :duration, :hits, :pgcount, :robots, :vtype, 
+			:returnhit, :searchphrase, :orgname, :city, :country, :region, :grouphash, :group, :groupcount, :pdfstem, :pdflist
 
-# This method calculates the rank
-    def calculate_rank(pages, duration, visitortype)
-      ranktotal = [pages,9].min*10 + [duration/60,9].min
-      rank = ((ranktotal+10)/20).round
-      rank = 1 if rank == 0
-      rank = -rank if visitortype == "S"
-      rank = 0 if visitortype == "D"
-      return rank   
-    end
-
-# This method extracts the name of a downloaded file from the csuriquery value    
-    def get_download(csuriquery, timetaken)
-	  download = nil
-	  if timetaken.to_i > 4000
-        split_uri = csuriquery.split("file=")
-        download = split_uri[1]
-        p download
-      end  
-      return download   
-    end
-
-# The method completes the initialization and update methods
-	def add_fields(csuriquery, timetaken, p_searchphrase, p_pageid)
-      @searchphrase = p_searchphrase if p_searchphrase
-	  @rank = calculate_rank(@pages, @duration, @visitortype)
-      @pageids = []
-      if p_pageid
-        @pageids << p_pageid
-      else
-        z=(/(PageID)=(\d+)/).match(csuriquery)
-        if z        
-          p_pageid = z[2].to_i
-          @pageids << p_pageid
-          @download_file = get_download(csuriquery, timetaken) if p_pageid == @@download_page_number
-        end  
-      end  	
-	end
-
-# This method initializes the Visit object. Load object with parsed data
-    def initialize(ip, log_dt, csuristem, csuriquery, timetaken, p_visitortype, p_pageflag, p_searchphrase, p_pageid)
+# This method initializes the Visit object. Loads object with parsed data from first captured line
+    def initialize(ip, log_dt, csuristem, csuriquery, timetaken, p_visitortype, p_pageflag, p_returnhit, p_pdfstem, visit_timeout)
       @ip = ip
       @start_dt = log_dt
-      @expire_dt = @start_dt + @@visit_timeout
+      @expire_dt = @start_dt + visit_timeout
       @end_dt = @start_dt
       @duration = 0
       @hits = 0
-      @pages = 0
-      @pages = 1 if p_pageflag
-      @visitortype = p_visitortype
-      @visitortype = "S" if csuristem == "/robots.txt"
+      @pgcount = 0
+      @pgcount = 1 if p_pageflag == "Y"  
+      @vtype = p_visitortype
+      @vtype = "S" if csuristem == "/robots.txt"
+      @returnhit = p_returnhit
+      @orgname = ""
+      @city = ""
+      @country = ""
+      @region = ""
+      @grouphash = Hash.new
+      @group = ""
+      @groupcount = 0
+      @orgmatch = ""
       @searchphrase = ""
-      add_fields(csuriquery, timetaken, p_searchphrase, p_pageid)      
+      @pdfstem = p_pdfstem
+      @pdflist = Array.new 
+      @pdflist << @pdfstem if not @pdfstem.nil?
+      @rank = calculate_rank(@pgcount, @duration, @vtype, @pdflist.length)       
+    end
+
+# This method calculates the rank
+    def calculate_rank(pgcount, duration, visitortype, pdfhits)
+			if pgcount < 4
+				rank = pgcount
+			elsif pgcount > 10
+				rank = 5
+			else
+				rank = 4
+			end
+			rank = 2 if duration < 21
+			rank = 1 if duration < 11
+			rank = 0 if duration < 11 and pgcount > 40
+			rank = 0 if pgcount > duration/5
+      rank = 0 if duration == 0
+      rank = 0 if visitortype == "D"
+      rank = rank + 1 if pdfhits > 0
+      rank = 5 if rank > 5
+      rank = -rank if visitortype == "S"
+      return rank   
     end
 
 # This method updates the Visit object with new parsed data
-    def update(end_dt, csuriquery, timetaken, p_visitortype, p_pageflag, p_searchphrase, p_pageid)
+    def update(end_dt, p_visitortype, p_pageflag, p_returnhit, p_pdfstem)
       @end_dt = end_dt
       @duration = (@end_dt - @start_dt).to_i
       @hits = @hits + 1
-      @pages = @pages + 1 if p_pageflag
-      @visitortype = p_visitortype if @visitortype == "H"
-      add_fields(csuriquery, timetaken, p_searchphrase, p_pageid)       
+      @pgcount = @pgcount + 1 if p_pageflag == "Y"        
+      @vtype = p_visitortype if @vtype == "H"
+      @returnhit = p_returnhit if @returnhit == "N"
+      @pdfstem = p_pdfstem
+			@pdflist << @pdfstem if @pdfstem and @pdflist.index(@pdfstem).nil?
+      @rank = calculate_rank(@pgcount, @duration, @vtype, @pdflist.length)           
     end
     
-    def sendoutput
-#if @rank > 0
-      iplong = @ip.to_s+"      "
-      p ">"+iplong[0..14]+" "+@start_dt.to_s[0..18]+" "+@visitortype+" Hits> "+@hits.to_s+" Pgs> "+@pages.to_s+" Dur> "+@duration.to_s+" Rank> "+@rank.to_s
-      p" Phrase> "+@searchphrase if @searchphrase.length > 0
-      p @pageids if @pageids.length > 0
-#end    
+# This method updates the Visit object with results of the whois lookup    
+    def add_details(orgname, city, country, region)
+			@orgname = orgname
+			@city = city
+			@country = country
+			@region = region
     end
+    
+    def getip
+      @ip
+    end
+
+# Get rank from object    
+    def getrank
+      @rank
+    end
+
+# Add count to group     
+    def increment_group(group)
+			@grouphash[group] = @grouphash[group].to_i + 1
+    end
+
+# Classify the visit based on various factors    
+    def classify_visit
+			@group = "none"
+			@groupcount = 0
+			if @grouphash.length > 0
+				z = @grouphash.invert.sort
+				zlast = z[z.length-1]
+				@group = zlast[1]
+				@groupcount = z.length				
+			end
+			case @group
+				when "news", "company", "resources"
+					@persona = "Analyst"
+				when "home", "contacts"
+					@persona = "Tirekicker"	
+				when "products", "solutions"
+					@persona = "Suspect"
+				when "careers"
+					@persona = "Jobhunter"			
+				when "evolve"
+					@persona = "Prospect"																
+				when "partners"
+					@persona = "Barney"
+				when "customers"
+					@persona = "Poacher"					
+				else
+					@persona = "None"
+			end
+			@persona = "Bouncer" if @rank < 3
+			@persona = "Prospect" if @persona == "Suspect" and ((@rank == 4 and @returnhit == "Y") or @rank == 5) 
+    end
+    
+# This method looks to match the orgname against the orgs file  
+		def matchorg(orgs)
+			@orgmatch = ""
+			orgs.each {|group, names|
+				names.each { |n|
+					if @orgname.index(n)
+						@orgmatch = group
+						break
+					end	
+				}
+			}
+		end
+
+# Print short output with key fields from the object    
+    def sendoutput
+      iplong = @ip+"      "
+      p ">"+iplong[0..14]+" "+@start_dt.to_s[0..18]+" "+@vtype+" Pgs> "+@pgcount.to_s+" Dur> "+@duration.to_s+" Rank> "+@rank.to_s
+    end
+ 
+# Print long output with key fields from the object    
+    def printoutput
+      iplong = @ip+"      "
+      p ">"+iplong[0..14]+" "+@start_dt.to_s[0..18]+" "+@vtype+" Pgs> "+@pgcount.to_s+" Dur> "+@duration.to_s+" Rank> "+@rank.to_s+" Org> "+@orgname+" City> "+@city+" Country> "+@country+" Region> "+@region
+    end
+ 
+    #def createcsvheader(fileout)
+			#fileout.puts("ipaddress, date, time, vtype, pgcount, duration, rank, returnhit, orgname, city, country, region")
+    #end    
+ 
+    #def createcsvoutput(fileout)
+			#iplong = @ip+"      "
+			#fileout.puts(iplong[0..14]+","+@start_dt.to_s[0..10]+","+@start_dt.to_s[11..18]+","+@vtype+","+@pgcount.to_s+","+@duration.to_s+","+@rank.to_s+","+@returnhit+","+@orgname+","+@city+","+@country+","+@region)
+    #end 
+ 
+ # Store output to Google docs spreadsheet    
+    def gdocsoutput (ws, row_count)
+			r = row_count+2
+			ws[r,1] = @ip
+			ws[r,2] = @start_dt.strftime("%m/%d/%Y")
+			ws[r,3] = @start_dt.strftime("%I:%M%p")
+			ws[r,4] = @pgcount
+			ws[r,5] = @duration
+			ws[r,6] = (@pdflist.length)				
+			ws[r,7] = @rank
+			ws[r,8] = @orgname
+			ws[r,9] = @city
+			ws[r,10] = @country
+			ws[r,11] = @region		
+			ws[r,12] = @returnhit
+			ws[r,13] = @persona					
+			ws[r,14] = @group
+			ws[r,15] = @groupcount
+			ws[r,16] = @orgmatch
+			ws.save()	    
+    end
+ 
+ # Save output to database file       
+    def saveoutput
+			@vzvisit = Vzvisit.new
+			@vzvisit[:ipaddr] = @ip
+			@vzvisit[:vdatetime] = @start_dt
+			@vzvisit[:vtype] = @vtype
+			@vzvisit[:pgcount] = @pgcount
+			@vzvisit[:duration] = @duration
+			@vzvisit[:rank] = @rank
+			@vzvisit[:orgname] = @orgname
+			@vzvisit[:city] = @city
+			@vzvisit[:country] = @country
+			@vzvisit[:region] = @region		
+			@vzvisit[:returnhit] = @returnhit		
+			@vzvisit[:group] = @group
+			@vzvisit[:groupcount] = @groupcount
+			@vzvisit[:persona] = @persona
+			@vzvisit[:orgmatch] = @orgmatch
+			@vzvisit[:pdfhits] = @pdflist.length					
+			@vzvisit.save			
+    end      
+    
   end
 
 # This class creates and manages a list to keep track of the visits that are in process (cached)
