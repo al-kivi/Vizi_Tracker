@@ -496,7 +496,7 @@ module Vizi
 			@vzvisit[:country] = @country
 			@vzvisit[:region] = @region		
 			@vzvisit[:returnhit] = @returnhit		
-			@vzvisit[:group] = @group
+			@vzvisit[:grp] = @group
 			@vzvisit[:groupcount] = @groupcount
 			@vzvisit[:persona] = @persona
 			@vzvisit[:orgmatch] = @orgmatch
